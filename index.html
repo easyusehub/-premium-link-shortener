@@ -62,13 +62,20 @@ label { font-weight: 800; font-size: 11px; color: var(--primary); text-transform
 .badge-status.active { background: var(--primary-light); color: var(--primary); }
 .badge-status.error { background: rgba(255,56,56,0.1); color: var(--warning); }
 
-input { 
+input, select { 
     width: 100%; padding: 14px 16px; border: 2px solid #f1f5f9; border-radius: 14px; 
     font-size: 15px; font-weight: 600; outline: none; transition: 0.3s; background: #f8fafc;
-    color: var(--dark);
+    color: var(--dark); appearance: none; -webkit-appearance: none;
+}
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 16px;
+    cursor: pointer;
 }
 input::placeholder { color: #94a3b8; font-weight: 500; }
-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.06); }
+input:focus, select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.06); }
 input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); }
 
 .main-btn { 
@@ -113,7 +120,7 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
     .main-header { padding: 20px 5px 5px; }
     .header-title { font-size: 22px; }
     .tool-card { padding: 20px; border-radius: 20px; }
-    input { padding: 12px 14px; font-size: 14px; border-radius: 10px; }
+    input, select { padding: 12px 14px; font-size: 14px; border-radius: 10px; }
     .short-url-container { flex-direction: column; width: 100%; gap: 10px; }
     .short-url-output { width: 100%; text-align: center; padding: 12px; font-size: 15px; }
     .copy-btn { width: 100%; padding: 13px; font-size: 14px; border-radius: 10px; }
@@ -147,6 +154,18 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
 
         <div class="input-group">
             <div class="label-wrapper">
+                <label for="apiSelector">Select Shortener Server (API)</label>
+                <span class="badge-status" style="background: var(--primary-light); color: var(--primary); font-weight:700;">Multi-Engine</span>
+            </div>
+            <select id="apiSelector">
+                <option value="isgd">is.gd Server (Ultra Short)</option>
+                <option value="tinyurl">TinyURL Server (High Bandwidth)</option>
+                <option value="vgd">v.gd Server (Secure Cloud)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <div class="label-wrapper">
                 <label for="customAlias">Custom Keyword</label>
                 <span class="badge-status" style="background: transparent; color: var(--slate); font-weight:500;">Optional</span>
             </div>
@@ -160,7 +179,7 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
         <section id="result-wrap">
             <span class="result-header">✨ Enterprise Short URL Generated:</span>
             <div class="short-url-container">
-                <div class="short-url-output" id="shortenedOutput">https://is.gd/loading</div>
+                <div class="short-url-output" id="shortenedOutput">https://easyusehub.org/loading</div>
                 <button class="copy-btn" id="cpBtn" onclick="copyPremiumLink()">COPY LINK</button>
             </div>
         </section>
@@ -223,10 +242,11 @@ function validateInput() {
     }
 }
 
-// 🚀 Fixed Dual-Engine Core Gateway (100% Active Redirect Lines)
+// 🚀 Core Processing Router based on Chosen API
 function processPremiumShortener() {
     let longUrl = document.getElementById('longUrl').value.trim();
     const alias = document.getElementById('customAlias').value.trim();
+    const selectedApi = document.getElementById('apiSelector').value;
     const outputDiv = document.getElementById('shortenedOutput');
     const resultWrap = document.getElementById('result-wrap');
     const btn = document.getElementById('genBtn');
@@ -240,65 +260,101 @@ function processPremiumShortener() {
 
     btn.disabled = true;
     btn.style.opacity = "0.7";
-    btn.innerText = "PROSECUTING SECURE REDIRECT...";
-    outputDiv.innerText = "Syncing with global infrastructure...";
+    btn.innerText = "ROUTING SECURE DATA...";
+    outputDiv.innerText = "Syncing with chosen infrastructure...";
     resultWrap.style.display = 'block';
 
-    // 🎯 Engine 1: Pure High-Speed is.gd Engine (5-character super short domains)
-    let primaryApi = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
-    if(alias) {
-        primaryApi += `&shorturl=${encodeURIComponent(alias)}`;
+    // ⚡ Router Gateways
+    if (selectedApi === "isgd") {
+        executeIsGdEngine(longUrl, alias);
+    } else if (selectedApi === "tinyurl") {
+        executeTinyUrlEngine(longUrl, alias);
+    } else if (selectedApi === "vgd") {
+        executeVGdEngine(longUrl, alias);
     }
+}
 
-    fetch(primaryApi)
-    .then(res => {
-        if (!res.ok) throw new Error("Primary Engine Throttle");
-        return res.json();
-    })
+function finalizeSuccess() {
+    const btn = document.getElementById('genBtn');
+    const resultWrap = document.getElementById('result-wrap');
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.innerText = "SHORTEN LINK NOW";
+    setTimeout(() => {
+        window.scrollTo({ top: resultWrap.offsetTop - 20, behavior: 'smooth' });
+    }, 50);
+}
+
+// 🎯 Engine 1: Pure High-Speed is.gd Engine
+function executeIsGdEngine(targetUrl, alias) {
+    const outputDiv = document.getElementById('shortenedOutput');
+    let api = `https://is.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
+    if(alias) api += `&shorturl=${encodeURIComponent(alias)}`;
+
+    fetch(api)
+    .then(res => res.json())
     .then(data => {
         if(data.shorturl) {
             outputDiv.innerText = data.shorturl;
-            finalizeSuccess();
         } else if (data.errcode === 2) {
-            alert("⚠️ Custom keyword is already taken by another firm. System will allocate a secure random identifier.");
-            executeBackupEngine(longUrl);
+            alert("⚠️ is.gd Error: Custom keyword is already taken.");
+            outputDiv.innerText = "Keyword Error. Choose another alias.";
         } else {
-            throw new Error("Pipeline standard error");
+            outputDiv.innerText = "Engine Error. Try another server.";
         }
+        finalizeSuccess();
     })
-    .catch(err => {
-        console.warn("Switching to Failover Backup Line...", err);
-        executeBackupEngine(longUrl);
+    .catch(() => {
+        outputDiv.innerText = "Server Unreachable. Try TinyURL Server.";
+        finalizeSuccess();
     });
+}
 
-    function finalizeSuccess() {
-        btn.disabled = false;
-        btn.style.opacity = "1";
-        btn.innerText = "SHORTEN LINK NOW";
-        setTimeout(() => {
-            window.scrollTo({ top: resultWrap.offsetTop - 20, behavior: 'smooth' });
-        }, 50);
-    }
+// 🎯 Engine 2: Pure High-Speed TinyURL Engine
+function executeTinyUrlEngine(targetUrl, alias) {
+    const outputDiv = document.getElementById('shortenedOutput');
+    let api = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`;
+    if(alias) api += `&alias=${encodeURIComponent(alias)}`;
 
-    // 🎯 Engine 2: High-Speed Pure TinyURL Core Line (Zero Masking Risk)
-    function executeBackupEngine(targetUrl) {
-        const backupApi = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`;
-        
-        fetch(backupApi)
-        .then(res => res.text())
-        .then(link => {
-            if(link.startsWith('http')) {
-                outputDiv.innerText = link;
-            } else {
-                outputDiv.innerText = "Service Error. Use accurate standard links.";
-            }
-            finalizeSuccess();
-        })
-        .catch(() => {
-            outputDiv.innerText = "Global Server Gateway Interrupted. Check internet.";
-            finalizeSuccess();
-        });
-    }
+    fetch(api)
+    .then(res => res.text())
+    .then(link => {
+        if(link.startsWith('http')) {
+            outputDiv.innerText = link;
+        } else {
+            outputDiv.innerText = "TinyURL Error. Keyword might be reserved.";
+        }
+        finalizeSuccess();
+    })
+    .catch(() => {
+        outputDiv.innerText = "Server Unreachable. Try is.gd Server.";
+        finalizeSuccess();
+    });
+}
+
+// 🎯 Engine 3: Premium v.gd Cloud Engine
+function executeVGdEngine(targetUrl, alias) {
+    const outputDiv = document.getElementById('shortenedOutput');
+    let api = `https://v.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
+    if(alias) api += `&shorturl=${encodeURIComponent(alias)}`;
+
+    fetch(api)
+    .then(res => res.json())
+    .then(data => {
+        if(data.shorturl) {
+            outputDiv.innerText = data.shorturl;
+        } else if (data.errcode === 2) {
+            alert("⚠️ v.gd Error: Custom keyword is already taken.");
+            outputDiv.innerText = "Keyword Error. Choose another alias.";
+        } else {
+            outputDiv.innerText = "Engine Error. Try another server.";
+        }
+        finalizeSuccess();
+    })
+    .catch(() => {
+        outputDiv.innerText = "Server Unreachable. Try TinyURL Server.";
+        finalizeSuccess();
+    });
 }
 
 // 📋 Zero-Latency Fluid Clipboard Engine
