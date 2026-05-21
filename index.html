@@ -155,12 +155,12 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
         <div class="input-group">
             <div class="label-wrapper">
                 <label for="apiSelector">Select Shortener Server (API)</label>
-                <span class="badge-status" style="background: var(--primary-light); color: var(--primary); font-weight:700;">Multi-Engine</span>
+                <span class="badge-status" style="background: var(--primary-light); color: var(--primary); font-weight:700;">100% Active</span>
             </div>
             <select id="apiSelector">
                 <option value="tinyurl">TinyURL Server (High Bandwidth)</option>
-                <option value="isgd">is.gd Server (Ultra Short)</option>
-                <option value="vgd">v.gd Server (Secure Cloud)</option>
+                <option value="ulvis">Ulvis Cloud Server (Fast Redirect)</option>
+                <option value="spoo">Spoo.me Server (Secure & Ultra Clean)</option>
             </select>
         </div>
 
@@ -216,7 +216,6 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
 </div>
 
 <script>
-// 🧠 Real-time Smart Input Validation
 function validateInput() {
     const urlInput = document.getElementById('longUrl');
     const status = document.getElementById('urlStatus');
@@ -242,7 +241,6 @@ function validateInput() {
     }
 }
 
-// 🚀 Core Processing Router based on Chosen API
 function processPremiumShortener() {
     let longUrl = document.getElementById('longUrl').value.trim();
     const alias = document.getElementById('customAlias').value.trim();
@@ -264,13 +262,12 @@ function processPremiumShortener() {
     outputDiv.innerText = "Syncing with chosen infrastructure...";
     resultWrap.style.display = 'block';
 
-    // ⚡ Router Gateways
     if (selectedApi === "tinyurl") {
         executeTinyUrlEngine(longUrl, alias);
-    } else if (selectedApi === "isgd") {
-        executeIsGdEngine(longUrl, alias);
-    } else if (selectedApi === "vgd") {
-        executeVGdEngine(longUrl, alias);
+    } else if (selectedApi === "ulvis") {
+        executeUlvisEngine(longUrl, alias);
+    } else if (selectedApi === "spoo") {
+        executeSpooEngine(longUrl, alias);
     }
 }
 
@@ -285,7 +282,7 @@ function finalizeSuccess() {
     }, 50);
 }
 
-// 🎯 Engine 1: Pure High-Speed TinyURL Engine (Direct Connection - No Proxy Needed)
+// 🎯 Engine 1: TinyURL
 function executeTinyUrlEngine(targetUrl, alias) {
     const outputDiv = document.getElementById('shortenedOutput');
     let api = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`;
@@ -302,79 +299,65 @@ function executeTinyUrlEngine(targetUrl, alias) {
         finalizeSuccess();
     })
     .catch(() => {
-        outputDiv.innerText = "Server Unreachable. Try another Server.";
-        finalizeSuccess();
+        outputDiv.innerText = "Server Unreachable. Trying alternative...";
+        executeSpooEngine(targetUrl, alias);
     });
 }
 
-// 🎯 Engine 2: High-Speed is.gd Engine (CORS Bypassed via Proxy Gateway)
-function executeIsGdEngine(targetUrl, alias) {
+// 🎯 Engine 2: Ulvis.net (CORS Free & Fast)
+function executeUlvisEngine(targetUrl, alias) {
     const outputDiv = document.getElementById('shortenedOutput');
-    let targetApi = `https://is.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
-    if(alias) targetApi += `&shorturl=${encodeURIComponent(alias)}`;
+    let api = `https://ulvis.net/api.php?url=${encodeURIComponent(targetUrl)}`;
+    if(alias) api += `&custom=${encodeURIComponent(alias)}`;
 
-    // CORS এবং ISP লেভেল নেটওয়ার্ক ব্লক এড়াতে অল-ওপেন প্রক্সি গেটওয়ে ব্যবহার করা হয়েছে
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetApi)}`;
-
-    fetch(proxyUrl)
-    .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
-    })
-    .then(wrapper => {
-        const data = JSON.parse(wrapper.contents);
-        if(data.shorturl) {
-            outputDiv.innerText = data.shorturl;
-        } else if (data.errcode === 2) {
-            alert("⚠️ is.gd Error: Custom keyword is already taken.");
-            outputDiv.innerText = "Keyword Error. Choose another alias.";
+    fetch(api)
+    .then(res => res.text())
+    .then(link => {
+        if(link.startsWith('http')) {
+            outputDiv.innerText = link;
         } else {
-            outputDiv.innerText = "Engine Error. Try TinyURL Server.";
+            outputDiv.innerText = "Ulvis Server busy. Link shortened via fallback.";
+            executeTinyUrlEngine(targetUrl, alias);
         }
         finalizeSuccess();
     })
     .catch(() => {
-        outputDiv.innerText = "ISP Gateway Blocked. Trying Failover Backup...";
-        // প্রক্সিতে কোনো সমস্যা হলে অটোমেটিক ব্যাকআপ হিসেবে TinyURL লোড হবে
         executeTinyUrlEngine(targetUrl, alias);
     });
 }
 
-// 🎯 Engine 3: Premium v.gd Cloud Engine (CORS Bypassed via Proxy Gateway)
-function executeVGdEngine(targetUrl, alias) {
+// 🎯 Engine 3: Spoo.me (Modern & Highly Secure API)
+function executeSpooEngine(targetUrl, alias) {
     const outputDiv = document.getElementById('shortenedOutput');
-    let targetApi = `https://v.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
-    if(alias) targetApi += `&shorturl=${encodeURIComponent(alias)}`;
+    
+    let formData = new FormData();
+    formData.append('url', targetUrl);
+    if(alias) formData.append('alias', alias);
 
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetApi)}`;
-
-    fetch(proxyUrl)
-    .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
+    fetch('https://spoo.me/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        }
     })
-    .then(wrapper => {
-        const data = JSON.parse(wrapper.contents);
-        if(data.shorturl) {
-            outputDiv.innerText = data.shorturl;
-        } else if (data.errcode === 2) {
-            alert("⚠️ v.gd Error: Custom keyword is already taken.");
-            outputDiv.innerText = "Keyword Error. Choose another alias.";
+    .then(res => res.json())
+    .then(data => {
+        if(data.short_url) {
+            outputDiv.innerText = data.short_url;
         } else {
-            outputDiv.innerText = "Engine Error. Try TinyURL Server.";
+            executeTinyUrlEngine(targetUrl, alias);
         }
         finalizeSuccess();
     })
     .catch(() => {
-        outputDiv.innerText = "ISP Gateway Blocked. Trying Failover Backup...";
         executeTinyUrlEngine(targetUrl, alias);
     });
 }
 
-// 📋 Zero-Latency Fluid Clipboard Engine
 function copyPremiumLink() {
     const text = document.getElementById('shortenedOutput').innerText;
-    if(text.includes("Syncing") || text.includes("Error") || text.includes("Blocked")) return;
+    if(text.includes("Syncing") || text.includes("Error") || text.includes("busy")) return;
 
     navigator.clipboard.writeText(text).then(() => {
         const btn = document.getElementById('cpBtn');
