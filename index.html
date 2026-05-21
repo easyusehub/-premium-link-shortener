@@ -158,8 +158,8 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
                 <span class="badge-status" style="background: var(--primary-light); color: var(--primary); font-weight:700;">Multi-Engine</span>
             </div>
             <select id="apiSelector">
-                <option value="isgd">is.gd Server (Ultra Short)</option>
                 <option value="tinyurl">TinyURL Server (High Bandwidth)</option>
+                <option value="isgd">is.gd Server (Ultra Short)</option>
                 <option value="vgd">v.gd Server (Secure Cloud)</option>
             </select>
         </div>
@@ -265,10 +265,10 @@ function processPremiumShortener() {
     resultWrap.style.display = 'block';
 
     // ⚡ Router Gateways
-    if (selectedApi === "isgd") {
-        executeIsGdEngine(longUrl, alias);
-    } else if (selectedApi === "tinyurl") {
+    if (selectedApi === "tinyurl") {
         executeTinyUrlEngine(longUrl, alias);
+    } else if (selectedApi === "isgd") {
+        executeIsGdEngine(longUrl, alias);
     } else if (selectedApi === "vgd") {
         executeVGdEngine(longUrl, alias);
     }
@@ -285,32 +285,7 @@ function finalizeSuccess() {
     }, 50);
 }
 
-// 🎯 Engine 1: Pure High-Speed is.gd Engine
-function executeIsGdEngine(targetUrl, alias) {
-    const outputDiv = document.getElementById('shortenedOutput');
-    let api = `https://is.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
-    if(alias) api += `&shorturl=${encodeURIComponent(alias)}`;
-
-    fetch(api)
-    .then(res => res.json())
-    .then(data => {
-        if(data.shorturl) {
-            outputDiv.innerText = data.shorturl;
-        } else if (data.errcode === 2) {
-            alert("⚠️ is.gd Error: Custom keyword is already taken.");
-            outputDiv.innerText = "Keyword Error. Choose another alias.";
-        } else {
-            outputDiv.innerText = "Engine Error. Try another server.";
-        }
-        finalizeSuccess();
-    })
-    .catch(() => {
-        outputDiv.innerText = "Server Unreachable. Try TinyURL Server.";
-        finalizeSuccess();
-    });
-}
-
-// 🎯 Engine 2: Pure High-Speed TinyURL Engine
+// 🎯 Engine 1: Pure High-Speed TinyURL Engine (Direct Connection - No Proxy Needed)
 function executeTinyUrlEngine(targetUrl, alias) {
     const outputDiv = document.getElementById('shortenedOutput');
     let api = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`;
@@ -327,40 +302,79 @@ function executeTinyUrlEngine(targetUrl, alias) {
         finalizeSuccess();
     })
     .catch(() => {
-        outputDiv.innerText = "Server Unreachable. Try is.gd Server.";
+        outputDiv.innerText = "Server Unreachable. Try another Server.";
         finalizeSuccess();
     });
 }
 
-// 🎯 Engine 3: Premium v.gd Cloud Engine
+// 🎯 Engine 2: High-Speed is.gd Engine (CORS Bypassed via Proxy Gateway)
+function executeIsGdEngine(targetUrl, alias) {
+    const outputDiv = document.getElementById('shortenedOutput');
+    let targetApi = `https://is.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
+    if(alias) targetApi += `&shorturl=${encodeURIComponent(alias)}`;
+
+    // CORS এবং ISP লেভেল নেটওয়ার্ক ব্লক এড়াতে অল-ওপেন প্রক্সি গেটওয়ে ব্যবহার করা হয়েছে
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetApi)}`;
+
+    fetch(proxyUrl)
+    .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+    })
+    .then(wrapper => {
+        const data = JSON.parse(wrapper.contents);
+        if(data.shorturl) {
+            outputDiv.innerText = data.shorturl;
+        } else if (data.errcode === 2) {
+            alert("⚠️ is.gd Error: Custom keyword is already taken.");
+            outputDiv.innerText = "Keyword Error. Choose another alias.";
+        } else {
+            outputDiv.innerText = "Engine Error. Try TinyURL Server.";
+        }
+        finalizeSuccess();
+    })
+    .catch(() => {
+        outputDiv.innerText = "ISP Gateway Blocked. Trying Failover Backup...";
+        // প্রক্সিতে কোনো সমস্যা হলে অটোমেটিক ব্যাকআপ হিসেবে TinyURL লোড হবে
+        executeTinyUrlEngine(targetUrl, alias);
+    });
+}
+
+// 🎯 Engine 3: Premium v.gd Cloud Engine (CORS Bypassed via Proxy Gateway)
 function executeVGdEngine(targetUrl, alias) {
     const outputDiv = document.getElementById('shortenedOutput');
-    let api = `https://v.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
-    if(alias) api += `&shorturl=${encodeURIComponent(alias)}`;
+    let targetApi = `https://v.gd/create.php?format=json&url=${encodeURIComponent(targetUrl)}`;
+    if(alias) targetApi += `&shorturl=${encodeURIComponent(alias)}`;
 
-    fetch(api)
-    .then(res => res.json())
-    .then(data => {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetApi)}`;
+
+    fetch(proxyUrl)
+    .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+    })
+    .then(wrapper => {
+        const data = JSON.parse(wrapper.contents);
         if(data.shorturl) {
             outputDiv.innerText = data.shorturl;
         } else if (data.errcode === 2) {
             alert("⚠️ v.gd Error: Custom keyword is already taken.");
             outputDiv.innerText = "Keyword Error. Choose another alias.";
         } else {
-            outputDiv.innerText = "Engine Error. Try another server.";
+            outputDiv.innerText = "Engine Error. Try TinyURL Server.";
         }
         finalizeSuccess();
     })
     .catch(() => {
-        outputDiv.innerText = "Server Unreachable. Try TinyURL Server.";
-        finalizeSuccess();
+        outputDiv.innerText = "ISP Gateway Blocked. Trying Failover Backup...";
+        executeTinyUrlEngine(targetUrl, alias);
     });
 }
 
 // 📋 Zero-Latency Fluid Clipboard Engine
 function copyPremiumLink() {
     const text = document.getElementById('shortenedOutput').innerText;
-    if(text.includes("Syncing") || text.includes("Error")) return;
+    if(text.includes("Syncing") || text.includes("Error") || text.includes("Blocked")) return;
 
     navigator.clipboard.writeText(text).then(() => {
         const btn = document.getElementById('cpBtn');
