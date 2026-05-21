@@ -160,7 +160,7 @@ input.invalid { border-color: var(--warning); background: rgba(255,56,56,0.01); 
         <section id="result-wrap">
             <span class="result-header">✨ Enterprise Short URL Generated:</span>
             <div class="short-url-container">
-                <div class="short-url-output" id="shortenedOutput">https://tiny.one/loading</div>
+                <div class="short-url-output" id="shortenedOutput">https://is.gd/loading</div>
                 <button class="copy-btn" id="cpBtn" onclick="copyPremiumLink()">COPY LINK</button>
             </div>
         </section>
@@ -223,7 +223,7 @@ function validateInput() {
     }
 }
 
-// 🚀 World Class Dual-Engine Execution Core with Ultra-Short Filters
+// 🚀 Fixed Dual-Engine Core Gateway (100% Active Redirect Lines)
 function processPremiumShortener() {
     let longUrl = document.getElementById('longUrl').value.trim();
     const alias = document.getElementById('customAlias').value.trim();
@@ -241,10 +241,10 @@ function processPremiumShortener() {
     btn.disabled = true;
     btn.style.opacity = "0.7";
     btn.innerText = "PROSECUTING SECURE REDIRECT...";
-    outputDiv.innerText = "Syncing with ultra-short infrastructure...";
+    outputDiv.innerText = "Syncing with global infrastructure...";
     resultWrap.style.display = 'block';
 
-    // 🎯 Engine 1: Custom Alias Target Routing Engine
+    // 🎯 Engine 1: Pure High-Speed is.gd Engine (5-character super short domains)
     let primaryApi = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
     if(alias) {
         primaryApi += `&shorturl=${encodeURIComponent(alias)}`;
@@ -257,8 +257,7 @@ function processPremiumShortener() {
     })
     .then(data => {
         if(data.shorturl) {
-            // Converts standard node into beautiful ultra-short aesthetic format
-            outputDiv.innerText = data.shorturl.replace('is.gd', 'v.gd');
+            outputDiv.innerText = data.shorturl;
             finalizeSuccess();
         } else if (data.errcode === 2) {
             alert("⚠️ Custom keyword is already taken by another firm. System will allocate a secure random identifier.");
@@ -268,7 +267,7 @@ function processPremiumShortener() {
         }
     })
     .catch(err => {
-        console.warn("Switching to Failover Ultra-Short Engine...", err);
+        console.warn("Switching to Failover Backup Line...", err);
         executeBackupEngine(longUrl);
     });
 
@@ -281,7 +280,7 @@ function processPremiumShortener() {
         }, 50);
     }
 
-    // 🎯 Engine 2: High-Speed Bitly Alternative (tiny.one Output Layer)
+    // 🎯 Engine 2: High-Speed Pure TinyURL Core Line (Zero Masking Risk)
     function executeBackupEngine(targetUrl) {
         const backupApi = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`;
         
@@ -289,8 +288,7 @@ function processPremiumShortener() {
         .then(res => res.text())
         .then(link => {
             if(link.startsWith('http')) {
-                // Hot swap long domain layout to absolute minimal character layout
-                outputDiv.innerText = link.replace('tinyurl.com', 'tiny.one');
+                outputDiv.innerText = link;
             } else {
                 outputDiv.innerText = "Service Error. Use accurate standard links.";
             }
